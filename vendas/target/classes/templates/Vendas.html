@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tela de Vendas</title>
+</head>
+
+<body>
+    <form th:object="${venda}" th:action="@{/addvenda}" method="post">
+        <div>
+            <div>
+                <label for="dataVenda">Data da Venda:</label>
+                <input type="date" th:field="*{dataVenda}" id="dataVenda" />
+
+                <label for="cpfCliente">CPF:</label>
+                <select th:field="*{cpfCliente}" id="cpfCliente" onchange="fetchClienteData()">
+                    <option th:each="cpf : ${allCpfs}" th:value="${cpf}" th:text="${cpf}"></option>
+                </select>
+
+                <br>
+
+                <label for="nomeCliente">Nome do Cliente:</label>
+                <input type="text" id="nomeCliente" th:field="*{nomeCliente}" readonly />
+
+            </div>
+
+            <label for="produto">Produto:</label>
+            <select th:field="*{cod_prodProduto}" id="cod_prodProduto" onchange="fetchProdutoData('cod_prod')"
+                placeholder="Código do Produto">
+                <option th:each="codProd : ${allCodProdutos}" th:value="${codProd}" th:text="${codProd}"></option>
+            </select>
+
+
+
+            <label>Descrição do produto:</label>
+            <input type="text" th:field="*{descricao}" id="descricao" placeholder="Descrição do produto"
+                onchange="fetchProdutoData('cod_prod')" />
+        </div>
+
+        <div>
+            <label for="qteVendida">Quantidade vendida</label>
+            <input type="number" th:field="*{qteVendida}" id="quantidade" placeholder="Quantidade" readonly
+                oninput="calculateTotal()" />
+        </div>
+
+        <div>
+            <label for="precoVenda">Preço de venda:</label>
+            <input type="number" th:field="*{precoVenda}" id="precoVenda" placeholder="Digite o valor do produto"
+                readonly oninput="calculateTotal()" />
+        </div>
+
+        <div>
+            <label>Valor total:</label>
+            <input type="text" id="valorTotal" th:field="*{valorTotal}" />
+        </div>
+
+        <input type="submit" value="Registrar venda">
+    </form>
+
+    <script>
+        function calculateTotal() {
+            var quantity = document.getElementById('quantidade').value;
+            var price = document.getElementById('precoVenda').value;
+            var total = quantity * price;
+            document.getElementById('valorTotal').value = total;
+        }
+
+        function fetchClienteData() {
+            var cpfCliente = document.getElementById('cpfCliente').value;
+            var url = '/getClienteByCpf?cpfCliente=' + cpfCliente;
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao buscar dados do cliente');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Verifique se os dados estão corretos
+                    console.log(data);
+                    // Atualize os campos do formulário com os dados do cliente
+                    document.getElementById('nomeCliente').value = data.nomeCliente;
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+
+
+
+        function fetchProdutoData(field) {
+            var value = document.getElementById(field).value;
+            var url = '/api/produto?field=' + field + '&value=' + value;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.descricao) {
+                        // Atualiza a descrição do produto no campo correspondente
+                        document.getElementById('descricao').value = data.descricao;
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+    </script>
+
+</body>
+
+</html>
